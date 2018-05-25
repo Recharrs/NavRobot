@@ -1,0 +1,20 @@
+
+Apps
+Other
+.ipynb_checkpoints
+unity-environment.log
+kobuki
+kobuki_Data kobuki.x86_64
+kobuki.x86_64
+kobuki_Data/
+__pycache__/
+checkpoint
+logdir/
+model
+movie
+TensorBoard/
+model2/
+TensorBoard_2/
+model3/
+movie_2/
+Asset/
