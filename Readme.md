@@ -19,5 +19,7 @@ Please go to the project folder to get more information.
 3. Train GAIL in continuous space w/o Nature Language
 
 ## Bugs To Fix
+- Not Found Yet
 
+---
 Last Update: May 26, 2018
