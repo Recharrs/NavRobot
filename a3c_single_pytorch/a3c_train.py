@@ -10,13 +10,10 @@ from my_utils import *
 import math
 
 def ensure_shared_grads(rank, model, shared_model):
-    for param, shared_param in zip(model.parameters(),
-                                   shared_model.parameters()):
+    for param, shared_param in zip(model.parameters(), shared_model.parameters()):
         if shared_param.grad is not None:
             return
-        if rank == 0:
         shared_param._grad = param.grad
-
 
 def train(rank, args, shared_model):
     torch.manual_seed(args.seed + rank)
@@ -55,14 +52,16 @@ def train(rank, args, shared_model):
     num_iters = 0
     
     # export
+    # ============
+    mv_maker = movie_maker(log_interval=10, path='./Asset/video')
     episode = 0
     frame = []
     instruction_prev = instruction
 
     this_ep_reward = 0
     total_avg_reward = [0]
-    ##### export done
-
+    # ============ export done ============
+    
     while True:
         import time
         time.sleep(0.3)
@@ -78,7 +77,6 @@ def train(rank, args, shared_model):
             cx = Variable(cx.data).cuda()
             hx = Variable(hx.data).cuda()
 
-
         values = []
         log_probs = []
         rewards = []
@@ -91,7 +89,7 @@ def train(rank, args, shared_model):
             value, logit, (hx, cx) = model((Variable(image.unsqueeze(0)).cuda(),
                                             Variable(instruction_idx).cuda(),
                                             (tx, hx, cx)))
-  
+
             prob = F.softmax(logit, dim=1)
             log_prob = F.log_softmax(logit, dim=1)
             entropy = -(log_prob * prob).sum(1)
@@ -101,46 +99,37 @@ def train(rank, args, shared_model):
             log_prob = log_prob.gather(1, Variable(action))
 
             action = action.cpu().numpy()[0, 0]
+            old_instruction = instruction
             (image, instruction), reward, done,  _ = env.step(action)
-            
-            reward = -0.2 if reward == 0.2 else reward
-            done = done or episode_length >= args.max_episode_length
 
             # export
+            # ============
+            reward = -0.2 if reward == 0.2 else reward
+            done = done or episode_length >= args.max_episode_length
             this_ep_reward += reward
-            if rank == 0 and episode % 30 == 0:
+            
+            if rank == 0:
                 if done:
-                    #print("{:.3f}".format(np.mean(total_avg_reward)))
-                    clip = make_plt_anim(frame, instruction_prev, reward)
-                    clip.save(args.vedio_location + "/ep_{:03d}.mp4".format(episode//30))
-                    torch.save(model.state_dict(), args.model_location)
-                    
-                    frame = []
-                    _image = np.swapaxes(image, 0, 2)
-                    _image = np.swapaxes(_image, 0, 1)
-                    frame.append(_image)
-                else:
-                    _image = np.swapaxes(image, 0, 2)
-                    _image = np.swapaxes(_image, 0, 1)
-                    frame.append(_image)
-            if rank == 0 and done:
-                total_avg_reward.append(this_ep_reward)
-                this_ep_reward = 0
-                episode += 1
-            ##### export done
+                    total_avg_reward.append(this_ep_reward)
+                    this_ep_reward = 0
+                    episode += 1
+                    mv_maker.export_ani(image, instruction_prev, reward)
+                    torch.save(model.state_dict(), args.model_location)    
+                mv_maker.add_new_image(image)
+            # ============ export done ============
 
             if done:
                 (image, instruction), _, _, _ = env.reset()                
                 instruction_idx = []
+                
                 for word in instruction.split(" "):
                     instruction_idx.append(env.word_to_idx[word])
+                
                 instruction_idx = np.array(instruction_idx)
                 instruction_idx = torch.from_numpy(
                         instruction_idx).view(1, -1)
                 
-                # bug issue
-                instruction_prev = instruction
-                ##### issue done
+                instruction_prev = instruction # bug issue
 
             image = torch.from_numpy(image).float().cuda()
 

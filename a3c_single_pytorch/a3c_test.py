@@ -14,7 +14,7 @@ from Asset.my_utils import *
 def test(rank, args, shared_model):
     torch.manual_seed(args.seed + rank)
 
-    env = env_wrapper('Asset/Apps/kobuki0/kobuki0', idx=rank, base=128)
+    env = env_wrapper('Asset/Apps/kobuki_c2/kobuki_c2', idx=rank, base=128)
     
     model = A3C_LSTM_GA(args)
     model = model.cuda()

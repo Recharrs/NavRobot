@@ -64,12 +64,10 @@ parser.add_argument('--tau', type=float, default=1.00, metavar='T',
                     help='parameter for GAE (default: 1.00)')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
-parser.add_argument('-n', '--num-processes', type=int, default=8, metavar='N',
-                    help='how many training processes to use (default: 4)')
+
 parser.add_argument('--num-steps', type=int, default=20, metavar='NS',
                     help='number of forward steps in A3C (default: 20)')
-parser.add_argument('--load', type=str, default="0",
-                    help='model path to load, 0 to not reload (default: 0)')
+
 parser.add_argument('-e', '--evaluate', type=int, default=0,
                     help="""0:Train, 1:Evaluate MultiTask Generalization
                     2:Evaluate Zero-shot Generalization (default: 0)""")
@@ -78,11 +76,15 @@ parser.add_argument('--dump-location', type=str, default="./Asset/model/saved_2/
                     help='path to dump models and log (default: ./saved/)')
 
 # Self-defined arguments
+parser.add_argument('--load', type=str, default="./Asset/model/saved_model",
+                    help='model path to load, 0 to not reload (default: 0)')
+parser.add_argument('-n', '--num-processes', type=int, default=8, metavar='N',
+                    help='how many training processes to use (default: 4)')
 parser.add_argument('--app-location', type=str, default='../Apps/kobuki_c2/kobuki_c2',
                     help='location of appilication')
 parser.add_argument('--model-location', type=str, default='./Asset/model/saved_model',
                     help='location of model')
-parser.add_argument('--vedio-location', type=str, default='./Asset/vedio',
+parser.add_argument('--video-location', type=str, default='./Asset/video',
                     help='location of appilication')
 
 if __name__ == '__main__':
@@ -95,13 +97,13 @@ if __name__ == '__main__':
     except RuntimeError:
         pass
     
-    os.system('rm -r ' + args.vedio_location)
+    os.system('rm -r ' + args.video_location)
     if not os.path.isdir('./Asset'):
         os.mkdir('./Asset')
     if not os.path.isdir('./Asset/model'):
         os.mkdir('./Asset/model')
-    if not os.path.isdir('./Asset/vedio'):
-       os.mkdir('./Asset/vedio')
+    if not os.path.isdir('./Asset/video'):
+        os.mkdir('./Asset/video')
 
     if args.evaluate == 0:
         args.use_train_instructions = 1

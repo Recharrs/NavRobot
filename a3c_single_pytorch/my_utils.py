@@ -34,7 +34,77 @@ def make_plt_anim(images, instruction, reward):
 	ani = animation.ArtistAnimation(fig, ims, interval=100, blit=True)
 	#ani.save('dynamic_images.mp4')
 	return ani
+
+# Make animation
+# ===============
+def make_anim(images, fps=60, true_image=False):
+    duration = len(images) / fps
+    import moviepy.editor as mpy
+
+    def make_frame(t):
+        try:
+            x = images[int(len(images) / duration * t)]
+        except:
+            x = images[-1]
+        if true_image:
+            return x.astype(np.uint8)
+        else:
+            return (x * 255).astype(np.uint8)
+
+    clip = mpy.VideoClip(make_frame, duration=duration)
+    clip.fps = fps
+    return clip
+
+def plt_vedio(images, instruction, reward):
+    # export
+    import matplotlib
+    matplotlib.use('agg')
+    import matplotlib.pyplot as plt
+
+    fig = plt.figure()
+    fig.tight_layout()
+    ims = []
+
+    color = 'orange'
+    if reward == 1.0:
+        color = 'green'
+    elif reward == -0.2: 
+        color = 'red'
+
+    import matplotlib.patches as mpatches        
+    import matplotlib.animation as animation
+    for frame in images:
+        patch = mpatches.Patch(color=color, label=instruction)
+        plt.legend(handles=[patch])
+        plt.axis('off')
+        im = plt.imshow(frame, animated=True)
+        ims.append([im])
     
+    plt.close(fig)
+    ani = animation.ArtistAnimation(fig, ims, interval=90, blit=True)
+    #ani.save('dynamic_images.mp4')
+    return ani
+
+class movie_maker:
+    def __init__(self, log_interval=10, path=''):
+        self.log_interval = log_interval
+        self.path = path
+        self.frame = []
+        self.episode = 0
+        
+    def add_new_image(self, image):
+        _image = np.swapaxes(image, 0, 2)
+        _image = np.swapaxes(_image, 0, 1)
+        self.frame.append(_image)
+        
+    def export_ani(self, image, inst, reward):
+        if self.episode % self.log_interval == 0:        
+            export_path = self.path + '/ep_{:04d}.mp4'.format(self.episode)
+            ani = plt_vedio(self.frame, inst, reward)
+            ani.save(export_path)
+        self.frame = []
+        self.episode += 1
+
 from baselines.common.vec_env import VecEnv
 from unityagents import UnityEnvironment
 
@@ -61,6 +131,20 @@ dict_obj = {
 def id2str(idx):
     inst = [dict_action[idx[0]], dict_color[idx[1]], dict_obj[idx[2]]]
     return " ".join(inst)
+
+def idx2word(idx):
+    word_to_idx = {
+          'object': 4, 'cylinder': 5, 'blue': 7, 'Go': 0, 'cube': 8, 
+          'green': 9, 'ball': 6, 'red': 3, 'the': 2, 'yellow': 10, 'to': 1,
+          'go': 11, 'any': 12, 'then': 13, 'sphere': 6
+    }
+    inv_map = {v: k for k, v in word_to_idx.items()}
+    
+    instruction_idx = []
+    for i in idx:
+        instruction_idx.append(inv_map[i])
+
+    return " ".join(instruction_idx)
 
 # def id2str(idx):
 #     print(idx)
