@@ -19,6 +19,9 @@ Please go to the project folder to get more information.
 - Train imitation learning (disrete space) w/o Nature Language
 - Train GAIL in continuous space w/o Nature Language
 
+1. 改cube跟cylinder的shader
+2. 拉
+
 # Update
 - a3c pytorch: chagne to new video recorder. (5/26)
 - PPO: add Tensorboard variable norm add gradient norm (5/27)
