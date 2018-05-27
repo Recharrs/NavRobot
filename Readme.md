@@ -22,11 +22,11 @@ Please go to the project folder to get more information.
    - 改 cube 跟 cylinder 的 shader
    - Prefab: 改顏色
 
-# Update
+## Update
 - a3c pytorch: chagne to new video recorder. (5/26)
 - PPO: add Tensorboard variable norm add gradient norm (5/27)
 
 ## Bugs To Fix
 - Not Found Yet
 ---
-Last Update: May 26, 2018
+Last Update: May 27, 2018
