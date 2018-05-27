@@ -150,7 +150,7 @@ class env_wrapper(object):
         env_info = self.env.step(act)[self.default_brain]
         ob     = env_info.observations[0][0]
         inst   = env_info.states[0]
-        reward = -0.2 if env_info.rewards[0] == -0.2 else env_info.rewards[0]
+        reward = -0.2 if env_info.rewards[0] == 0.2 else env_info.rewards[0]
         done   = env_info.local_done[0]
 
         return ob, inst, reward, done, dict()

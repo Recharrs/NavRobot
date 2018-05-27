@@ -23,9 +23,11 @@ from policy2 import LstmPolicy
 import utils
 
 run_path = '../Apps/kobuki_c2/kobuki_c2'
-logdir_path = './Asset/logdir'
-model_path = './Asset/model'
-vedio_path = './Asset/video'
+
+root_path = 'Asset'
+logdir_path = os.path.join(root_path, 'logdir')
+model_path = os.path.join(root_path, 'model')
+video_path = os.path.join(root_path, 'video')
 
 def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
             vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
@@ -37,7 +39,8 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
     if isinstance(cliprange, float): cliprange = constfn(cliprange)
     else: assert callable(cliprange)
     total_timesteps = int(total_timesteps)
-
+    
+    summary = None
     nenvs = env.num_envs
     ob_space = env.observation_space
     ac_space = env.action_space
@@ -80,6 +83,7 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
                     slices = (arr[mbinds] for arr in (obs, insts, returns, masks, actions, values, neglogpacs))
 
                     mblossvals.append(model.train(lrnow, cliprangenow, *slices))
+        
         else: # recurrent version
             assert nenvs % nminibatches == 0
             envsperbatch = nenvs // nminibatches
@@ -95,11 +99,13 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
                     slices = (arr[mbflatinds] for arr in (obs, insts, returns, masks, actions, values, neglogpacs))
                     mbstates = states[mbenvinds]
                     mblossvals.append(model.train(lrnow, cliprangenow, *slices, mbstates))
-
+                    summary = model.get_summary()
+                    
         lossvals = np.mean(mblossvals, axis=0)
         tnow = time.time()
         fps = int(nbatch / (tnow - tstart))
         if update % log_interval == 0 or update == 1:
+            model.writer.add_summary(summary, update)
             ev = explained_variance(values, returns)
             logger.logkv("serial_timesteps", update*nsteps)
             logger.logkv("nupdates", update)
@@ -113,7 +119,7 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
                 logger.logkv(lossname, lossval)
             logger.dumpkvs()
         if save_interval and (update % save_interval == 0 or update == 1) and logger.get_dir():
-            checkdir = osp.join(logger.get_dir(), 'checkpoints')
+            checkdir = osp.join('Asset', 'model')
             os.makedirs(checkdir, exist_ok=True)
             savepath = osp.join(checkdir, '%.5i'%update)
             print('Saving to', savepath)
@@ -129,12 +135,18 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
     #directory
-    os.system('rm -r ' + logdir_path)
-    os.system('rm -r ' + vedio_path)
-    if not os.path.isdir(logdir_path):
-        os.mkdir(logdir_path)
-    if not os.path.isdir(vedio_path):
-        os.mkdir(vedio_path)
+    if not os.path.isdir(root_path):
+        os.mkdir(root_path)
+        
+    if os.path.isdir(logdir_path):
+        os.system('rm -r ' + logdir_path)
+    os.mkdir(logdir_path)
+    
+    if not os.path.isdir(video_path):
+        os.mkdir(video_path)
+    else:
+        print('Please Check Files')
+        #sys.exit(1)
 
     policy=LstmPolicy
     env = utils.multi_env(run_path, num_envs=8, base=0)
@@ -149,10 +161,12 @@ if __name__ == '__main__':
     tf.Session(config=config).__enter__()
 
     policy = policy
-    learn(policy=policy, env=env, nsteps=128, nminibatches=4,
+    learn(policy=policy, env=env, nsteps=32, nminibatches=4,
         lam=0.95, gamma=0.99, noptepochs=4, log_interval=1,
+        max_grad_norm=0.1,
         ent_coef=.01,
-        lr=lambda f : f * 2.5e-4,
-        cliprange=lambda f : f * 0.05,
-        total_timesteps=int(num_timesteps * 1.1))
+        lr=lambda f : f * 1e-4,
+        cliprange=lambda f : f * 0.2,
+        total_timesteps=int(num_timesteps * 1.1),
+        save_interval=10)
     

@@ -14,9 +14,14 @@ Please go to the project folder to get more information.
    - train status: None / test status: -
 
 ## ToDo List
-1. Train PPO model
-2. Train imitation learning (disrete space) w/o Nature Language
-3. Train GAIL in continuous space w/o Nature Language
+- Train PPO model
+- Save PPO model
+- Train imitation learning (disrete space) w/o Nature Language
+- Train GAIL in continuous space w/o Nature Language
+
+# Update
+- a3c pytorch: chagne to new video recorder. (5/26)
+- PPO: add Tensorboard variable norm add gradient norm (5/27)
 
 ## Bugs To Fix
 - Not Found Yet

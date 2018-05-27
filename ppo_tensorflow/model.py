@@ -47,9 +47,9 @@ class Model(object):
         grads = list(zip(grads, params))
         trainer = tf.train.AdamOptimizer(learning_rate=LR, epsilon=1e-5)
         _train = trainer.apply_gradients(grads)
-
+        
+        self.td_map = None
         def train(lr, cliprange, obs, insts, returns, masks, actions, values, neglogpacs, states=None):
-
             advs = returns - values
             advs = (advs - advs.mean()) / (advs.std() + 1e-8)
             td_map = {train_model.X:obs, train_model.I:insts,
@@ -58,10 +58,12 @@ class Model(object):
             if states is not None:
                 td_map[train_model.S] = states
                 td_map[train_model.M] = masks
+            self.td_map = td_map
             return sess.run(
                 [pg_loss, vf_loss, entropy, approxkl, clipfrac, _train],
                 td_map
             )[:-1]
+        
         self.loss_names = [
             'policy_loss', 'value_loss', 'policy_entropy', 'approxkl', 'clipfrac']
 
@@ -85,3 +87,40 @@ class Model(object):
         self.save = save
         self.load = load
         tf.global_variables_initializer().run(session=sess) #pylint: disable=E1101
+        
+        # add summary
+        # ===========
+        self.writer = tf.summary.FileWriter('./Asset/logdir', sess.graph)
+        
+        cnn_grads = tf.gradients(loss, train_model.cnn_var)
+        gru_grads = tf.gradients(loss, train_model.gru_var)
+        ga_grads = tf.gradients(loss, train_model.ga_var)
+        lstm_grads = tf.gradients(loss, train_model.lstm_var)
+        pi_grads = tf.gradients(loss, train_model.pi_var)
+        vf_grads = tf.gradients(loss, train_model.vf_var)
+
+        cnn_grad_norm = tf.global_norm(cnn_grads, name='cnn_grads')
+        gru_grad_norm = tf.global_norm(gru_grads, name='gru_grads')
+        ga_grad_norm = tf.global_norm(ga_grads, name='ga_grads')
+        lstm_grad_norm = tf.global_norm(lstm_grads, name='lstm_grads')
+        pi_grad_norm = tf.global_norm(pi_grads, name='pi_grads')
+        vf_grad_norm = tf.global_norm(vf_grads, name='vf_grads')
+        
+        tf.summary.scalar('GradNorm/cnn', cnn_grad_norm)
+        tf.summary.scalar('GradNorm/gru', gru_grad_norm)
+        tf.summary.scalar('GradNorm/GA', ga_grad_norm)
+        tf.summary.scalar('GradNorm/lstm', lstm_grad_norm)
+        tf.summary.scalar('GradNorm/pi', pi_grad_norm)
+        tf.summary.scalar('GradNorm/vf', vf_grad_norm)
+        
+        tf.summary.scalar('loss/policy_loss', pg_loss)
+        tf.summary.scalar('loss/value_loss', vf_loss)
+        tf.summary.scalar('loss/entropy', entropy)
+        
+        self.merged = tf.summary.merge_all()
+        
+        def get_summary():          
+            return sess.run(self.merged, self.td_map)
+        self.get_summary = get_summary
+            
+        
