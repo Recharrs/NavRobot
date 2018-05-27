@@ -1,5 +1,4 @@
 # Nature Language Navigated Robot
----
 
 Please go to the project folder to get more information.
 
@@ -19,8 +18,9 @@ Please go to the project folder to get more information.
 - Train imitation learning (disrete space) w/o Nature Language
 - Train GAIL in continuous space w/o Nature Language
 
-1. 改cube跟cylinder的shader
-2. 拉
+- Unity
+   - 改 cube 跟 cylinder 的 shader
+   - Prefab: 改顏色
 
 # Update
 - a3c pytorch: chagne to new video recorder. (5/26)
@@ -28,6 +28,5 @@ Please go to the project folder to get more information.
 
 ## Bugs To Fix
 - Not Found Yet
-
 ---
 Last Update: May 26, 2018
