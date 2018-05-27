@@ -83,14 +83,14 @@ class A3C_LSTM_GA(torch.nn.Module):
             tx = tx.cuda()
             hx = hx.cuda()
             cx = cx.cuda()
-            
+        
         # Get the image representation
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
         x_image_rep = F.relu(self.conv3(x))
         
         # Get the instruction representation
-        encoder_hidden = Variable(torch.zeros(1, 1, self.gru_hidden_size))
+        encoder_hidden = Variable(torch.zeros(1, 1, self.gru_hidden_size)).cuda()
         for i in range(input_inst.data.size(1)):
             word_embedding = self.embedding(input_inst[0, i]).unsqueeze(0)
             _, encoder_hidden = self.gru(word_embedding, encoder_hidden)

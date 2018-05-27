@@ -87,22 +87,38 @@ parser.add_argument('--model-location', type=str, default='./Asset/model/saved_m
 parser.add_argument('--video-location', type=str, default='./Asset/video',
                     help='location of appilication')
 
-if __name__ == '__main__':
-    action = main(image, instruction)
+word_to_idx = {
+    'object': 4, 'cylinder': 5, 'blue': 7, 'Go': 0, 'cube': 8, 
+    'green': 9, 'ball': 6, 'red': 3, 'the': 2, 'yellow': 10, 'to': 1,
+    'go': 11, 'any': 12, 'then': 13, 'sphere': 6
+}
     
-def main(image, instruction):    
-    args = parser.parse_args()
-    args.input_size = len(env.word_to_idx)
-        
-    shared_model = A3C_LSTM_GA(args)
-    shared_model = shared_model.cuda()
 
-    # Load the model
-    if (args.load != "0"):
-        shared_model.load_state_dict(
-            torch.load(args.load, map_location=lambda storage, loc: storage))
+class Model:    
+    def __init__(self):
+        args = parser.parse_args()
+        args.input_size = len(word_to_idx)
 
-    shared_model.share_memory()
-    test_model = test(args, shared_model)
-    action = test_model.step(image, instruction)
-    return action
+        shared_model = A3C_LSTM_GA(args)
+        shared_model = shared_model.cuda()
+
+        # Load the model
+        if (args.load != "0"):
+            shared_model.load_state_dict(
+                torch.load(args.load, map_location=lambda storage, loc: storage))
+
+        shared_model.share_memory()
+        self.test_model = test(args, shared_model)
+    
+    def step(self, image, instruction):
+        action = self.test_model.step(image, instruction)
+        return action
+
+if __name__ == '__main__':
+    test_model = Model()
+    
+    while True:
+        image=np.zeros((3, 168, 300))
+        instruction='go to the red ball'
+        action = test_model.step(image, instruction)
+        print(action)
